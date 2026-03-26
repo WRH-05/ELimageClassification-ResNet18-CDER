@@ -1,0 +1,10 @@
+.github/
+.venv/
+elpv-dataset-master/
+zipz/
+AGENTS.md
+data/
+*.zip
+PVEL-AD.zip
+*.onnx
+zips/
