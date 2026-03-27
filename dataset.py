@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import torch
 from PIL import Image
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms
 
 
@@ -185,6 +185,26 @@ class ELDataset(Dataset):
         return image_tensor, target
 
 
+def build_weighted_sampler(items: Sequence[Tuple[Path, float]]) -> WeightedRandomSampler:
+    bucket_counts: Dict[int, int] = {0: 0, 1: 0, 2: 0, 3: 0}
+    for _, defect_probability in items:
+        bucket = defect_probability_to_bucket(defect_probability)
+        bucket_counts[bucket] += 1
+
+    sample_weights: List[float] = []
+    for _, defect_probability in items:
+        bucket = defect_probability_to_bucket(defect_probability)
+        count = bucket_counts[bucket]
+        weight = 1.0 / float(count) if count > 0 else 0.0
+        sample_weights.append(weight)
+
+    return WeightedRandomSampler(
+        weights=torch.tensor(sample_weights, dtype=torch.double),
+        num_samples=len(sample_weights),
+        replacement=True,
+    )
+
+
 def create_dataloaders(
     csv_path: str,
     data_root: str,
@@ -203,11 +223,12 @@ def create_dataloaders(
     train_ds = ELDataset(split_items.train, train_tfms)
     val_ds = ELDataset(split_items.val, val_tfms)
     test_ds = ELDataset(split_items.test, test_tfms)
+    train_sampler = build_weighted_sampler(split_items.train)
 
     train_loader = DataLoader(
         train_ds,
         batch_size=batch_size,
-        shuffle=True,
+        sampler=train_sampler,
         num_workers=num_workers,
         pin_memory=torch.cuda.is_available(),
     )
