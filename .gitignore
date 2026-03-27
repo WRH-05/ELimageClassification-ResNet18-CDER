@@ -8,3 +8,5 @@ data/
 PVEL-AD.zip
 *.onnx
 zips/
+images/
+__pycache__/

@@ -20,7 +20,8 @@ def preprocess_el_image(image_path: str, image_size: int = 224) -> np.ndarray:
     denoised = cv2.medianBlur(gray, 3)
 
     rgb = np.stack([denoised, denoised, denoised], axis=-1)
-    resized = cv2.resize(rgb, (image_size, image_size), interpolation=cv2.INTER_AREA)
+    # Match torchvision Resize default behavior used in eval transforms (bilinear-style interpolation).
+    resized = cv2.resize(rgb, (image_size, image_size), interpolation=cv2.INTER_LINEAR)
 
     normalized = resized.astype(np.float32) / 255.0
     normalized = (normalized - IMAGENET_MEAN) / IMAGENET_STD
