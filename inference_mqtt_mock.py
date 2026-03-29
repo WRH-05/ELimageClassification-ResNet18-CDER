@@ -1,6 +1,6 @@
 import argparse
 import json
-from typing import Dict
+from typing import Dict, Optional
 
 import cv2
 import numpy as np
@@ -31,9 +31,15 @@ def preprocess_el_image(image_path: str, image_size: int = 224) -> np.ndarray:
     return batched
 
 
-def infer_severity_score(onnx_model_path: str, image_path: str, image_size: int = 224) -> float:
-    providers = ["CPUExecutionProvider"]
-    session = ort.InferenceSession(onnx_model_path, providers=providers)
+def infer_severity_score(
+    onnx_model_path: str,
+    image_path: str,
+    image_size: int = 224,
+    session: Optional[ort.InferenceSession] = None,
+) -> float:
+    if session is None:
+        providers = ["CPUExecutionProvider"]
+        session = ort.InferenceSession(onnx_model_path, providers=providers)
 
     input_name = session.get_inputs()[0].name
     model_input = preprocess_el_image(image_path=image_path, image_size=image_size)
@@ -74,10 +80,14 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    providers = ["CPUExecutionProvider"]
+    session = ort.InferenceSession(args.onnx_model, providers=providers)
+
     score = infer_severity_score(
         onnx_model_path=args.onnx_model,
         image_path=args.image_path,
         image_size=args.image_size,
+        session=session,
     )
 
     payload = build_payload(

@@ -62,8 +62,7 @@ def predict_with_checkpoint(
 
 
 def predict_with_onnx(onnx_path: Path, items: Sequence[Tuple[Path, float]], image_size: int) -> List[float]:
-    # Validate model is readable before iterating item-by-item.
-    _ = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+    session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
 
     predictions: List[float] = []
     for image_path, _ in items:
@@ -71,6 +70,7 @@ def predict_with_onnx(onnx_path: Path, items: Sequence[Tuple[Path, float]], imag
             onnx_model_path=str(onnx_path),
             image_path=str(image_path),
             image_size=image_size,
+            session=session,
         )
         predictions.append(float(pred))
 
