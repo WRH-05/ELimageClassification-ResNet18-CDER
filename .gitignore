@@ -6,7 +6,6 @@ AGENTS.md
 data/
 *.zip
 PVEL-AD.zip
-*.onnx
 zips/
 images/
 __pycache__/

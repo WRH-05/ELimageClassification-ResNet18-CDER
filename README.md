@@ -9,6 +9,23 @@ Edge-AI pipeline for nighttime EL solar defect severity regression using transfe
 - `inference_mqtt_mock.py` - ONNX Runtime inference + JSON/MQTT mock payload
 - `evaluate_test_split_report.py` - Per-image held-out test split report (target/prediction/error CSV)
 
+## Final Deployment Recommendation (V3.1)
+- Production artifact: `best_model_v3_1_goldilocks.onnx`
+- Recommended operational threshold: `0.65` (F1-optimal balance on held-out test set)
+- Tested behavior at threshold `0.65` on target `>= 0.8`:
+	- Precision: `0.8051`
+	- Recall: `0.8796`
+	- F1: `0.8407`
+- At threshold `0.60` (more sensitive mode):
+	- Precision: `0.7742`
+	- Recall: `0.8889`
+
+## Deployment Constraints
+- The exported production model is ONNX Opset `18`.
+- Raspberry Pi target must run an ONNX Runtime build compatible with Opset 18.
+- Recommended minimum runtime version: `onnxruntime >= 1.14`.
+- Validate runtime compatibility on target before rollout with a one-image smoke inference.
+
 ## 1) Install dependencies (PowerShell)
 ```powershell
 & ".\.venv\Scripts\Activate.ps1"
@@ -34,7 +51,7 @@ If you need CPU fallback, replace `--device cuda` with `--device cpu`.
 
 ## 5) Run edge inference
 ```powershell
-& ".\.venv\Scripts\python.exe" inference_mqtt_mock.py --onnx_model best_model_v2_full.onnx --image_path images/cell0001.png --pad_id simulated_pad_01 --critical_threshold 0.8
+& ".\.venv\Scripts\python.exe" inference_mqtt_mock.py --onnx_model best_model_v3_1_goldilocks.onnx --image_path images/cell0001.png --pad_id simulated_pad_01 --critical_threshold 0.65
 ```
 
 ## 6) Generate held-out test split report
