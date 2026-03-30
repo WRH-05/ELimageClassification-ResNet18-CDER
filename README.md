@@ -76,3 +76,5 @@ Checkpoint path evaluation:
 - EL inputs are denoised with median blur and converted to 3-channel tensors for pretrained ResNet18 compatibility.
 - Severity score is the model's direct continuous output in [0, 1].
 - V2 training logs MSE, MAE, and R2 for train/val/test.
+
+### Trained on the [elpv-dataset](https://github.com/zae-bayern/elpv-dataset.git)
