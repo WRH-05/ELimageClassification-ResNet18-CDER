@@ -9,5 +9,4 @@ PVEL-AD.zip
 zips/
 images/
 __pycache__/
-*.onnx.data
 *.pth
