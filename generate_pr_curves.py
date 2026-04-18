@@ -37,6 +37,18 @@ def parse_args() -> argparse.Namespace:
         help="Path to V3.1 test report CSV.",
     )
     parser.add_argument(
+        "--v1_name",
+        type=str,
+        default="V1 (MSE)",
+        help="Display name for V1 model in plots and summary.",
+    )
+    parser.add_argument(
+        "--v3_name",
+        type=str,
+        default="V3.1 (Asymmetric)",
+        help="Display name for V3 model in plots and summary.",
+    )
+    parser.add_argument(
         "--output_dir",
         type=str,
         default="results",
@@ -175,11 +187,19 @@ def save_figure(fig: plt.Figure, base_path: Path, formats: Iterable[str], dpi: i
         fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
 
 
-def plot_pr_curve(v1: Dict[str, object], v3: Dict[str, object], out_dir: Path, formats: Iterable[str], dpi: int) -> None:
+def plot_pr_curve(
+    v1: Dict[str, object],
+    v3: Dict[str, object],
+    v1_name: str,
+    v3_name: str,
+    out_dir: Path,
+    formats: Iterable[str],
+    dpi: int,
+) -> None:
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(v1["recall_curve"], v1["precision_curve"], label=f"V1 (AP={v1['ap']:.4f})", linewidth=2)
-    ax.plot(v3["recall_curve"], v3["precision_curve"], label=f"V3.1 (AP={v3['ap']:.4f})", linewidth=2)
-    ax.set_title("Precision-Recall Curve: V1 (MSE) vs V3.1 (Asymmetric)")
+    ax.plot(v1["recall_curve"], v1["precision_curve"], label=f"{v1_name} (AP={v1['ap']:.4f})", linewidth=2)
+    ax.plot(v3["recall_curve"], v3["precision_curve"], label=f"{v3_name} (AP={v3['ap']:.4f})", linewidth=2)
+    ax.set_title(f"Precision-Recall Curve: {v1_name} vs {v3_name}")
     ax.set_xlabel("Recall")
     ax.set_ylabel("Precision")
     ax.set_xlim(0.0, 1.0)
@@ -195,12 +215,20 @@ def plot_pr_curve(v1: Dict[str, object], v3: Dict[str, object], out_dir: Path, f
     plt.close(fig)
 
 
-def plot_roc_curve(v1: Dict[str, object], v3: Dict[str, object], out_dir: Path, formats: Iterable[str], dpi: int) -> None:
+def plot_roc_curve(
+    v1: Dict[str, object],
+    v3: Dict[str, object],
+    v1_name: str,
+    v3_name: str,
+    out_dir: Path,
+    formats: Iterable[str],
+    dpi: int,
+) -> None:
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(v1["fpr_curve"], v1["tpr_curve"], label=f"V1 (AUC={v1['roc_auc']:.4f})", linewidth=2)
-    ax.plot(v3["fpr_curve"], v3["tpr_curve"], label=f"V3.1 (AUC={v3['roc_auc']:.4f})", linewidth=2)
+    ax.plot(v1["fpr_curve"], v1["tpr_curve"], label=f"{v1_name} (AUC={v1['roc_auc']:.4f})", linewidth=2)
+    ax.plot(v3["fpr_curve"], v3["tpr_curve"], label=f"{v3_name} (AUC={v3['roc_auc']:.4f})", linewidth=2)
     ax.plot([0, 1], [0, 1], linestyle="--", linewidth=1, color="gray", label="Random")
-    ax.set_title("ROC Curve: V1 (MSE) vs V3.1 (Asymmetric)")
+    ax.set_title(f"ROC Curve: {v1_name} vs {v3_name}")
     ax.set_xlabel("False Positive Rate")
     ax.set_ylabel("True Positive Rate")
     ax.set_xlim(0.0, 1.0)
@@ -217,13 +245,15 @@ def plot_f1_threshold(
     f1_curve_v3: np.ndarray,
     thresholds: np.ndarray,
     operating_threshold: float,
+    v1_name: str,
+    v3_name: str,
     out_dir: Path,
     formats: Iterable[str],
     dpi: int,
 ) -> None:
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(thresholds, f1_curve_v1, label="V1 F1", linewidth=2)
-    ax.plot(thresholds, f1_curve_v3, label="V3.1 F1", linewidth=2)
+    ax.plot(thresholds, f1_curve_v1, label=f"{v1_name} F1", linewidth=2)
+    ax.plot(thresholds, f1_curve_v3, label=f"{v3_name} F1", linewidth=2)
 
     best_idx_v1 = int(np.argmax(f1_curve_v1))
     best_idx_v3 = int(np.argmax(f1_curve_v3))
@@ -268,13 +298,15 @@ def plot_confusion_matrices(
     cm_v1: np.ndarray,
     cm_v3: np.ndarray,
     operating_threshold: float,
+    v1_name: str,
+    v3_name: str,
     out_dir: Path,
     formats: Iterable[str],
     dpi: int,
 ) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-    _annotate_confusion_matrix(axes[0], cm_v1, f"V1 @ threshold {operating_threshold:.2f}")
-    _annotate_confusion_matrix(axes[1], cm_v3, f"V3.1 @ threshold {operating_threshold:.2f}")
+    _annotate_confusion_matrix(axes[0], cm_v1, f"{v1_name} @ threshold {operating_threshold:.2f}")
+    _annotate_confusion_matrix(axes[1], cm_v3, f"{v3_name} @ threshold {operating_threshold:.2f}")
     fig.suptitle("Confusion Matrix Comparison")
 
     save_figure(fig, out_dir / "confusion_matrices_at_operating_threshold", formats=formats, dpi=dpi)
@@ -284,14 +316,16 @@ def plot_confusion_matrices(
 def plot_error_distribution(
     residuals_v1: np.ndarray,
     residuals_v3: np.ndarray,
+    v1_name: str,
+    v3_name: str,
     out_dir: Path,
     formats: Iterable[str],
     dpi: int,
 ) -> None:
     fig, ax = plt.subplots(figsize=(9, 6))
     bins = np.linspace(-1.0, 1.0, 60)
-    ax.hist(residuals_v1, bins=bins, alpha=0.45, density=True, label="V1 residuals", color="#1f77b4")
-    ax.hist(residuals_v3, bins=bins, alpha=0.45, density=True, label="V3.1 residuals", color="#d62728")
+    ax.hist(residuals_v1, bins=bins, alpha=0.45, density=True, label=f"{v1_name} residuals", color="#1f77b4")
+    ax.hist(residuals_v3, bins=bins, alpha=0.45, density=True, label=f"{v3_name} residuals", color="#d62728")
     ax.axvline(0.0, linestyle="--", color="black", linewidth=1)
     ax.set_title("Residual Distribution (prediction - target)")
     ax.set_xlabel("Residual")
@@ -307,34 +341,36 @@ def write_metrics_summary(
     out_dir: Path,
     v1_metrics: Dict[str, object],
     v3_metrics: Dict[str, object],
+    v1_name: str,
+    v3_name: str,
     target_threshold: float,
     operating_threshold: float,
 ) -> None:
     lines = [
-        "V1 vs V3.1 Comparative Summary",
+        f"{v1_name} vs {v3_name} Comparative Summary",
         "=" * 38,
         f"Target binarization threshold: {target_threshold:.4f}",
         f"Operating decision threshold: {operating_threshold:.4f}",
         "",
         "Primary discrimination metrics",
-        f"- V1 Average Precision (AP): {v1_metrics['ap']:.6f}",
-        f"- V3.1 Average Precision (AP): {v3_metrics['ap']:.6f}",
-        f"- V1 ROC-AUC: {v1_metrics['roc_auc']:.6f}",
-        f"- V3.1 ROC-AUC: {v3_metrics['roc_auc']:.6f}",
+        f"- {v1_name} Average Precision (AP): {v1_metrics['ap']:.6f}",
+        f"- {v3_name} Average Precision (AP): {v3_metrics['ap']:.6f}",
+        f"- {v1_name} ROC-AUC: {v1_metrics['roc_auc']:.6f}",
+        f"- {v3_name} ROC-AUC: {v3_metrics['roc_auc']:.6f}",
         "",
         f"Operating-point metrics @ threshold {operating_threshold:.2f}",
-        f"- V1 Precision: {v1_metrics['precision_at_op']:.6f}",
-        f"- V3.1 Precision: {v3_metrics['precision_at_op']:.6f}",
-        f"- V1 Recall: {v1_metrics['recall_at_op']:.6f}",
-        f"- V3.1 Recall: {v3_metrics['recall_at_op']:.6f}",
-        f"- V1 F1: {v1_metrics['f1_at_op']:.6f}",
-        f"- V3.1 F1: {v3_metrics['f1_at_op']:.6f}",
+        f"- {v1_name} Precision: {v1_metrics['precision_at_op']:.6f}",
+        f"- {v3_name} Precision: {v3_metrics['precision_at_op']:.6f}",
+        f"- {v1_name} Recall: {v1_metrics['recall_at_op']:.6f}",
+        f"- {v3_name} Recall: {v3_metrics['recall_at_op']:.6f}",
+        f"- {v1_name} F1: {v1_metrics['f1_at_op']:.6f}",
+        f"- {v3_name} F1: {v3_metrics['f1_at_op']:.6f}",
         "",
         "Regression fidelity metrics",
-        f"- V1 MAE: {v1_metrics['mae']:.6f}",
-        f"- V3.1 MAE: {v3_metrics['mae']:.6f}",
-        f"- V1 MSE: {v1_metrics['mse']:.6f}",
-        f"- V3.1 MSE: {v3_metrics['mse']:.6f}",
+        f"- {v1_name} MAE: {v1_metrics['mae']:.6f}",
+        f"- {v3_name} MAE: {v3_metrics['mae']:.6f}",
+        f"- {v1_name} MSE: {v1_metrics['mse']:.6f}",
+        f"- {v3_name} MSE: {v3_metrics['mse']:.6f}",
     ]
 
     summary_path = out_dir / "metrics_summary.txt"
@@ -385,13 +421,31 @@ def main() -> None:
     _, _, f1_curve_v1, f1_thresholds = compute_f1_threshold_curve(y_true_binary, y_score_v1, thresholds)
     _, _, f1_curve_v3, _ = compute_f1_threshold_curve(y_true_binary, y_score_v3, thresholds)
 
-    plot_pr_curve(v1_metrics, v3_metrics, output_dir, formats=args.formats, dpi=args.dpi)
-    plot_roc_curve(v1_metrics, v3_metrics, output_dir, formats=args.formats, dpi=args.dpi)
+    plot_pr_curve(
+        v1_metrics,
+        v3_metrics,
+        v1_name=args.v1_name,
+        v3_name=args.v3_name,
+        out_dir=output_dir,
+        formats=args.formats,
+        dpi=args.dpi,
+    )
+    plot_roc_curve(
+        v1_metrics,
+        v3_metrics,
+        v1_name=args.v1_name,
+        v3_name=args.v3_name,
+        out_dir=output_dir,
+        formats=args.formats,
+        dpi=args.dpi,
+    )
     plot_f1_threshold(
         f1_curve_v1=f1_curve_v1,
         f1_curve_v3=f1_curve_v3,
         thresholds=f1_thresholds,
         operating_threshold=args.operating_threshold,
+        v1_name=args.v1_name,
+        v3_name=args.v3_name,
         out_dir=output_dir,
         formats=args.formats,
         dpi=args.dpi,
@@ -400,6 +454,8 @@ def main() -> None:
         cm_v1=v1_metrics["confusion_matrix"],
         cm_v3=v3_metrics["confusion_matrix"],
         operating_threshold=args.operating_threshold,
+        v1_name=args.v1_name,
+        v3_name=args.v3_name,
         out_dir=output_dir,
         formats=args.formats,
         dpi=args.dpi,
@@ -407,6 +463,8 @@ def main() -> None:
     plot_error_distribution(
         residuals_v1=v1_metrics["residuals"],
         residuals_v3=v3_metrics["residuals"],
+        v1_name=args.v1_name,
+        v3_name=args.v3_name,
         out_dir=output_dir,
         formats=args.formats,
         dpi=args.dpi,
@@ -416,6 +474,8 @@ def main() -> None:
         out_dir=output_dir,
         v1_metrics=v1_metrics,
         v3_metrics=v3_metrics,
+        v1_name=args.v1_name,
+        v3_name=args.v3_name,
         target_threshold=args.target_threshold,
         operating_threshold=args.operating_threshold,
     )

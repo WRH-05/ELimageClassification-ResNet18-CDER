@@ -1,0 +1,24 @@
+V1 (MSE) vs V3.1 (SAHL 1.5x) Comparative Summary
+======================================
+Target binarization threshold: 0.6500
+Operating decision threshold: 0.6500
+
+Primary discrimination metrics
+- V1 (MSE) Average Precision (AP): 0.875337
+- V3.1 (SAHL 1.5x) Average Precision (AP): 0.852037
+- V1 (MSE) ROC-AUC: 0.899235
+- V3.1 (SAHL 1.5x) ROC-AUC: 0.882044
+
+Operating-point metrics @ threshold 0.65
+- V1 (MSE) Precision: 0.890110
+- V3.1 (SAHL 1.5x) Precision: 0.794872
+- V1 (MSE) Recall: 0.648000
+- V3.1 (SAHL 1.5x) Recall: 0.744000
+- V1 (MSE) F1: 0.750000
+- V3.1 (SAHL 1.5x) F1: 0.768595
+
+Regression fidelity metrics
+- V1 (MSE) MAE: 0.154814
+- V3.1 (SAHL 1.5x) MAE: 0.172917
+- V1 (MSE) MSE: 0.083116
+- V3.1 (SAHL 1.5x) MSE: 0.101511

@@ -64,10 +64,9 @@ def compute_mae(predictions: np.ndarray, targets: np.ndarray) -> float:
     return float(np.mean(np.abs(predictions - targets)))
 
 
-def aggregate_variance_study() -> None:
-    """Aggregate multi-seed variance results (V1 and V3.1 SAHL @ 2.5x)."""
+def aggregate_variance_study(v3_weight: float, v3_label: str) -> None:
+    """Aggregate multi-seed variance results (V1 and configurable V3 SAHL weight)."""
     seeds = [42, 123, 2026]
-    losses = [("mse", 1.0), ("weighted_l1", 2.5)]
     report_dir = Path("testCsv")
 
     results: Dict[str, List[float]] = {
@@ -95,8 +94,8 @@ def aggregate_variance_study() -> None:
             results["v1_mae"].append(compute_mae(preds, targets))
             results["v1_critical_recall"].append(compute_critical_recall(preds, targets))
 
-        # V3.1: weighted_l1 @ 2.5x
-        v3_report = report_dir / f"test_split_report_seed{seed}_weighted_l1_w2.5.csv"
+        # V3.1: weighted_l1 @ configurable weight
+        v3_report = report_dir / f"test_split_report_seed{seed}_weighted_l1_w{v3_weight:.1f}.csv"
         if v3_report.exists():
             preds, targets = load_test_report(v3_report)
             v3_metrics = compute_metrics_at_threshold(preds, targets, 0.65, 0.65)
@@ -128,7 +127,7 @@ def aggregate_variance_study() -> None:
             "| Model | F1-Score |",
             "|-------|----------|",
             f"| V1 (MSE) | ${v1_f1_mean:.3f} \\pm {v1_f1_std:.3f}$ |",
-            f"| V3.1 (SAHL 2.5x) | ${v3_f1_mean:.3f} \\pm {v3_f1_std:.3f}$ |",
+            f"| {v3_label} | ${v3_f1_mean:.3f} \\pm {v3_f1_std:.3f}$ |",
             "",
         ])
 
@@ -145,7 +144,7 @@ def aggregate_variance_study() -> None:
             "| Model | Precision |",
             "|-------|-----------|",
             f"| V1 (MSE) | ${v1_prec_mean:.3f} \\pm {v1_prec_std:.3f}$ |",
-            f"| V3.1 (SAHL 2.5x) | ${v3_prec_mean:.3f} \\pm {v3_prec_std:.3f}$ |",
+            f"| {v3_label} | ${v3_prec_mean:.3f} \\pm {v3_prec_std:.3f}$ |",
             "",
         ])
 
@@ -162,7 +161,7 @@ def aggregate_variance_study() -> None:
             "| Model | Recall |",
             "|-------|--------|",
             f"| V1 (MSE) | ${v1_recall_mean:.3f} \\pm {v1_recall_std:.3f}$ |",
-            f"| V3.1 (SAHL 2.5x) | ${v3_recall_mean:.3f} \\pm {v3_recall_std:.3f}$ |",
+            f"| {v3_label} | ${v3_recall_mean:.3f} \\pm {v3_recall_std:.3f}$ |",
             "",
         ])
 
@@ -179,7 +178,7 @@ def aggregate_variance_study() -> None:
             "| Model | MAE |",
             "|-------|-----|",
             f"| V1 (MSE) | ${v1_mae_mean:.4f} \\pm {v1_mae_std:.4f}$ |",
-            f"| V3.1 (SAHL 2.5x) | ${v3_mae_mean:.4f} \\pm {v3_mae_std:.4f}$ |",
+            f"| {v3_label} | ${v3_mae_mean:.4f} \\pm {v3_mae_std:.4f}$ |",
             "",
         ])
 
@@ -196,7 +195,7 @@ def aggregate_variance_study() -> None:
             "| Model | Critical Recall |",
             "|-------|-----------------|",
             f"| V1 (MSE) | ${v1_crit_mean:.3f} \\pm {v1_crit_std:.3f}$ |",
-            f"| V3.1 (SAHL 2.5x) | ${v3_crit_mean:.3f} \\pm {v3_crit_std:.3f}$ |",
+            f"| {v3_label} | ${v3_crit_mean:.3f} \\pm {v3_crit_std:.3f}$ |",
             "",
         ])
 
@@ -282,6 +281,18 @@ def parse_args() -> argparse.Namespace:
         choices=["variance", "ablation"],
         help="Which aggregation to run: 'variance' or 'ablation'.",
     )
+    parser.add_argument(
+        "--v3_weight",
+        type=float,
+        default=2.5,
+        help="SAHL weighted_l1 multiplier to use for V3 variance aggregation.",
+    )
+    parser.add_argument(
+        "--v3_label",
+        type=str,
+        default="V3.1 (SAHL 2.5x)",
+        help="Display label for V3 model in variance output tables.",
+    )
     return parser.parse_args()
 
 
@@ -290,7 +301,7 @@ def main() -> None:
     args = parse_args()
 
     if args.mode == "variance":
-        aggregate_variance_study()
+        aggregate_variance_study(v3_weight=args.v3_weight, v3_label=args.v3_label)
     elif args.mode == "ablation":
         aggregate_ablation_study()
 
