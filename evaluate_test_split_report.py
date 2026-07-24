@@ -7,9 +7,14 @@ import numpy as np
 import onnxruntime as ort
 import torch
 
-from dataset import build_transforms, load_csv_samples, stratified_split, ELDataset
+from src.training.dataset import (
+    build_transforms,
+    load_csv_samples,
+    stratified_split,
+    ELDataset,
+)
 from inference_mqtt_mock import infer_severity_score
-from train import build_model
+from src.training.train import build_model
 
 
 def parse_args() -> argparse.Namespace:

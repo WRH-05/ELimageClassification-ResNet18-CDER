@@ -17,7 +17,7 @@ def preprocess_el_image(image_path: str, image_size: int = 224) -> np.ndarray:
     if gray is None:
         raise FileNotFoundError(f"Unable to read image: {image_path}")
 
-    denoised = cv2.medianBlur(gray, 3)
+    denoised = cv2.medianBlur(gray, 5)
 
     rgb = np.stack([denoised, denoised, denoised], axis=-1)
     # Match torchvision Resize default behavior used in eval transforms (bilinear-style interpolation).
