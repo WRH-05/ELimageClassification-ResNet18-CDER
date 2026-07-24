@@ -1,0 +1,10 @@
+.github/
+.venv/
+elpv-dataset-master/
+zipz/
+data/
+*.zip
+PVEL-AD.zip
+zips/
+images/
+__pycache__/
